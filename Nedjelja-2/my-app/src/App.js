@@ -10,8 +10,8 @@ class App extends React.Component {
     super(props);
 
     this.state = {
-      userInfo: { name: "Name", username: "Username: " },
       allMovies: [],
+      searchVal: "",
       loading: true,
       currentPage: 1,
     };
@@ -32,7 +32,13 @@ class App extends React.Component {
   }
 
   getMovieInfo() {
-    let movies = this.state.allMovies;
+    let allMovies = this.state.allMovies;
+    let searchVal = this.state.searchVal;
+
+    let movies = allMovies.filter((movie) =>
+      movie.title.toLowerCase().includes(searchVal.toLowerCase())
+    );
+
     return movies.map((movie) => {
       return <User movieInfo={movie} key={movie.id}></User>;
     });
@@ -61,14 +67,26 @@ class App extends React.Component {
     }
   };
 
+  changeResults = (e) => {
+    let searchVal = e.target.value;
+    this.setState({ searchVal });
+  };
+
   render() {
-    console.log(this.state.currentPage);
     if (this.state.loading === true) {
-      return <div class="ui active centered inline loader"></div>;
+      return <div className="ui active centered inline loader"></div>;
     }
     return (
       <div id="all">
         <h1>Popular Movies Page: {this.state.currentPage}</h1>
+        <div className="ui icon input">
+          <input
+            type="text"
+            placeholder="Search..."
+            onChange={this.changeResults}
+          />
+          <i className="search icon"></i>
+        </div>
         <div className="buttons-container">
           <div
             className="ui animated fade button"
