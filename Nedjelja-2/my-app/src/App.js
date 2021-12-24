@@ -14,6 +14,8 @@ class App extends React.Component {
       searchVal: "",
       loading: true,
       currentPage: 1,
+      totalPages: 1,
+      isSorted: false,
     };
   }
 
@@ -23,8 +25,11 @@ class App extends React.Component {
         return response.json();
       })
       .then((data) => {
-        console.log(data.results);
-        this.setState({ allMovies: data.results, loading: false });
+        this.setState({
+          allMovies: data.results,
+          totalPages: data.total_pages,
+          loading: false,
+        });
       })
       .catch((error) => {
         console.log(error);
@@ -50,8 +55,10 @@ class App extends React.Component {
       currentPage = this.state.currentPage - 1;
     }
 
+    let totalPages = this.state.totalPages;
     currentPage = currentPage < 1 ? (currentPage = 1) : currentPage;
-    currentPage = currentPage > 500 ? (currentPage = 500) : currentPage;
+    currentPage =
+      currentPage > totalPages ? (currentPage = totalPages) : currentPage;
 
     if (currentPage !== this.state.currentPage) {
       fetch(BASE_URL + "&page=" + currentPage)
@@ -72,13 +79,53 @@ class App extends React.Component {
     this.setState({ searchVal });
   };
 
+  sortByRating = () => {
+    let allMovies = this.state.allMovies;
+    let positions = [];
+    let ratings = [];
+
+    allMovies.forEach((movie) => {
+      ratings.push(movie.vote_average);
+    });
+
+    ratings.sort();
+
+    let isSorted = !this.state.isSorted;
+    if (!isSorted) {
+      ratings.reverse();
+    }
+
+    let sortedMovies = [];
+    let i = 0,
+      j = 0;
+    while (true) {
+      if (!positions.includes(i) && allMovies[i].vote_average === ratings[j]) {
+        sortedMovies.push(allMovies[i]);
+        positions.push(i);
+        i = -1;
+        j++;
+      }
+
+      if (positions.length === allMovies.length) {
+        break;
+      }
+
+      i++;
+    }
+
+    this.setState({ allMovies: sortedMovies, isSorted });
+  };
+
   render() {
     if (this.state.loading === true) {
       return <div className="ui active centered inline loader"></div>;
     }
     return (
       <div id="all">
-        <h1>Popular Movies Page: {this.state.currentPage}</h1>
+        <h1>
+          Popular Movies Page: {this.state.currentPage} /{" "}
+          {this.state.totalPages}
+        </h1>
         <div className="ui icon input">
           <input
             type="text"
@@ -110,6 +157,17 @@ class App extends React.Component {
               <i className="right arrow icon"></i>
             </div>
           </div>
+          <button
+            className="ui right labeled icon button"
+            onClick={this.sortByRating}
+          >
+            {this.state.isSorted ? (
+              <i className="up arrow icon"></i>
+            ) : (
+              <i className="down arrow icon"></i>
+            )}
+            Sort by rating
+          </button>
         </div>
         <div className="ui link cards">{this.getMovieInfo()}</div>
       </div>
